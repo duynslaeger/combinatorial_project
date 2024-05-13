@@ -19,48 +19,68 @@ def Ass_Plan_Prob(data,n):
     R = data['R']
     Mu = data['Mu']
 
-    p = 1
+    p = len(R)/5
     
     model = gp.Model('TrnLocMILP')
 
-    y0 = model.addVar(vtype='C', name="y0")
+    y = model.addVars(len(R),vtype=GRB.CONTINUOUS, name = "y", lb=0)
+    z = model.addVars(len(R),vtype=GRB.BINARY, name = "z")
     
     # Variables
-    y = {}
-    z = {}
+    # y = {}
+    # z = {}
     
-    for i in R:
-        y[i] = model.addVar(vtype=GRB.CONTINUOUS, name = "y[%s]" % i)
+    # for i in R:
+    #     y[i] = model.addVar(vtype=GRB.CONTINUOUS, name = "y[%s]" % i, lb=0)
 
-    for i in R:
-        z[i] = model.addVar(vtype=GRB.BINARY, name = "z[%s]" % i)
+    # for i in R:
+    #     z[i] = model.addVar(vtype=GRB.BINARY, name = "z[%s]" % i)
 
     # Constraints
     Probability = {}
     Y_constrain = {}
     Z_constrain = {}
-    for i in R:
-        Probability[i] = model.addConstr(
-            y0 + gp.quicksum(y[i] for i in R) == 1
-        )
-    n=0
-    for j in R:
-        Y_constrain[j] = model.addConstr(
-            y[j] <= y0*exp(Mu[n])
-        )
-        n+=1
 
-    for j in R:
-        Z_constrain[j] = model.addConstr(y[j] <= z[j])
 
-    for i in range(n):
-        model.addConstr(gp.quicksum(z[i]) <= p)
+    # for i in R:
+    #     Probability[i] = model.addConstr(
+    #         y0 + gp.quicksum(y[i] for i in R) == 1
+    #     )
+    # n=0
+    # for j in R:
+    #     Y_constrain[j] = model.addConstr(
+    #         y[j] <= y0*exp(Mu[n])
+    #     )
+    #     n+=1
+
+    # for j in R:
+    #     Z_constrain[j] = model.addConstr(y[j] <= z[j])
+
+    # for i in range(n):
+    #     model.addConstr(gp.quicksum(z[i]) <= p)
+
+    model.addConstr(y[0]+gp.quicksum(y[i] for i in range(len(R))) == 1)
+    model.addConstrs(y[i] <= y[0]*exp(Mu[i]) for i in range(len(R)))
+    model.addConstrs(y[i] <= z[i] for i in range(len(R)))
+    model.addConstr(gp.quicksum(z[i] for i in range(len(R))) <= p )
     
+    model.setObjective(R[0]*y[0] + gp.quicksum(R[i]*y[i] for i in range(1,len(R))), GRB.MAXIMIZE)
     model.update()
-    model.setObjective(gp.quicksum(i*y[i] for i in R), GRB.MAXIMIZE)
-    model.update()
-    return model
 
+
+    model.optimize()
+    print("Optimization is done. Objective function Value: %.2f " % model.ObjVal)
+
+    # Get the optimal values of y
+    optimal_y = [y[i].getAttr('X') for i in range(len(R))]
+
+    # Get the optimal values of z
+    optimal_z = [int(z[i].getAttr('X')) for i in range(len(R))]
+
+    print(optimal_y)
+    print(optimal_z)
+
+    return model
 
 # Retrieve the data form the CSV file, r => the net revenue of the object i where i belongs to I
 #                                      mu => the mean utilities of the object i
@@ -70,4 +90,4 @@ data['R'] = read_data(os.path.join('data', 'small-r.csv'))
 data['Mu'] = read_data(os.path.join('data', 'small-mu.csv'))
 
 model_AssPlan = Ass_Plan_Prob(data,10)
-model_AssPlan.optimize()
+# model_AssPlan.optimize()
