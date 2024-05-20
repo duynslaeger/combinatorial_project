@@ -4,6 +4,7 @@ import gurobipy as gp
 from math import exp
 from gurobipy import GRB
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def read_data(file):
@@ -14,65 +15,66 @@ def read_data(file):
             data.extend([float(value) for value in row])
     return data
 
-def Ass_Plan_Prob(data,n):
+def Ass_Plan_Prob(data):
     # Unpack
     R = data['R']
     Mu = data['Mu']
+    I = [i for i in range(len(R))]
 
     # Change here the probability
-    p = len(R)/5
+    p = len(I)/5
     
     model = gp.Model('TrnLocMILP')
 
     # First add the variables that you use
-    y = model.addVars(len(R),vtype=GRB.CONTINUOUS, name = "y", lb=0)
-    z = model.addVars(len(R),vtype=GRB.BINARY, name = "z")
+    # y = model.addVars(len(R),vtype=GRB.CONTINUOUS, name = "y", lb=0)
+    # z = model.addVars(len(R),vtype=GRB.BINARY, name = "z")
     
     # That's the code from the lab
     # however there are strange because you build your dictionnary with key equals to the value of R ?
     # like y={"0.0":1, "0.0":2,...}
 
     # Variables
-    # y = {}
-    # z = {}
+    y = {}
+    z = {}
     
-    # for i in R:
-    #     y[i] = model.addVar(vtype=GRB.CONTINUOUS, name = "y[%s]" % i, lb=0)
+    for i in I:
+        y[i] = model.addVar(vtype=GRB.CONTINUOUS, name = "y[%s]" % i, lb=0)
 
-    # for i in R:
-    #     z[i] = model.addVar(vtype=GRB.BINARY, name = "z[%s]" % i)
+    for i in I:
+        z[i] = model.addVar(vtype=GRB.BINARY, name = "z[%s]" % i)
 
-    # Constraints
+    # 4 Constraints
     Probability = {}
     Y_constrain = {}
     Z_constrain = {}
+    Unknow_constrain = {}
 
 
-    # for i in R:
+    # for i in I:
     #     Probability[i] = model.addConstr(
-    #         y0 + gp.quicksum(y[i] for i in R) == 1
+    #         y[0] + gp.quicksum(y[i]) == 1
     #     )
-    # n=0
-    # for j in R:
-    #     Y_constrain[j] = model.addConstr(
-    #         y[j] <= y0*exp(Mu[n])
-    #     )
-    #     n+=1
 
-    # for j in R:
-    #     Z_constrain[j] = model.addConstr(y[j] <= z[j])
+    for i in I:
+        Y_constrain[i] = model.addConstr(
+            y[i] <= y[0]*exp(Mu[i])
+        )
 
-    # for i in range(n):
-    #     model.addConstr(gp.quicksum(z[i]) <= p)
+    for i in I:
+        Z_constrain[i] = model.addConstr(y[i] <= z[i])
+
+    # for i in I:
+    #     Unknow_constrain[i] = model.addConstr(gp.quicksum(z[i]) <= p)
 
     # Second add the constraint of your model
-    model.addConstr(y[0]+gp.quicksum(y[i] for i in range(len(R))) == 1)
-    model.addConstrs(y[i] <= y[0]*exp(Mu[i]) for i in range(len(R)))
-    model.addConstrs(y[i] <= z[i] for i in range(len(R)))
-    model.addConstr(gp.quicksum(z[i] for i in range(len(R))) <= p )
+    model.addConstr(y[0]+gp.quicksum(y[i] for i in I) == 1)
+    # model.addConstrs(y[i] <= y[0]*exp(Mu[i]) for i in I)
+    # model.addConstrs(y[i] <= z[i] for i in I)
+    model.addConstr(gp.quicksum(z[i] for i in I) <= p )
     
     # Then set the objective function
-    model.setObjective(R[0]*y[0] + gp.quicksum(R[i]*y[i] for i in range(1,len(R))), GRB.MAXIMIZE)
+    model.setObjective(R[0]*y[0] + gp.quicksum(R[i]*y[i] for i in I[1:]), GRB.MAXIMIZE)
     # Update the model
     model.update()
 
@@ -87,8 +89,12 @@ def Ass_Plan_Prob(data,n):
     # Get the optimal values of z
     optimal_z = [int(z[i].getAttr('X')) for i in range(len(R))]
 
-    print(optimal_y)
-    print(optimal_z)
+    fig, axs = plt.subplots(2)
+    fig.suptitle('Solution problem')
+
+    axs[0].scatter([i for i in range(len(R))],optimal_y)
+    axs[1].scatter([i for i in range(len(R))],optimal_z)
+    plt.show()
 
     return model
 
@@ -98,5 +104,5 @@ def Ass_Plan_Prob(data,n):
 data = {}
 data['R'] = read_data(os.path.join('data', 'small-r.csv'))
 data['Mu'] = read_data(os.path.join('data', 'small-mu.csv'))
-
-model_AssPlan = Ass_Plan_Prob(data,10)
+model_AssPlan = Ass_Plan_Prob(data)
+print(model_AssPlan.getAttr('X'))
