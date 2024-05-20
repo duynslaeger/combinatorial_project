@@ -19,13 +19,19 @@ def Ass_Plan_Prob(data,n):
     R = data['R']
     Mu = data['Mu']
 
+    # Change here the probability
     p = len(R)/5
     
     model = gp.Model('TrnLocMILP')
 
+    # First add the variables that you use
     y = model.addVars(len(R),vtype=GRB.CONTINUOUS, name = "y", lb=0)
     z = model.addVars(len(R),vtype=GRB.BINARY, name = "z")
     
+    # That's the code from the lab
+    # however there are strange because you build your dictionnary with key equals to the value of R ?
+    # like y={"0.0":1, "0.0":2,...}
+
     # Variables
     # y = {}
     # z = {}
@@ -59,15 +65,19 @@ def Ass_Plan_Prob(data,n):
     # for i in range(n):
     #     model.addConstr(gp.quicksum(z[i]) <= p)
 
+    # Second add the constraint of your model
     model.addConstr(y[0]+gp.quicksum(y[i] for i in range(len(R))) == 1)
     model.addConstrs(y[i] <= y[0]*exp(Mu[i]) for i in range(len(R)))
     model.addConstrs(y[i] <= z[i] for i in range(len(R)))
     model.addConstr(gp.quicksum(z[i] for i in range(len(R))) <= p )
     
+    # Then set the objective function
     model.setObjective(R[0]*y[0] + gp.quicksum(R[i]*y[i] for i in range(1,len(R))), GRB.MAXIMIZE)
+    # Update the model
     model.update()
 
 
+    # Otpimize it
     model.optimize()
     print("Optimization is done. Objective function Value: %.2f " % model.ObjVal)
 
@@ -90,4 +100,3 @@ data['R'] = read_data(os.path.join('data', 'small-r.csv'))
 data['Mu'] = read_data(os.path.join('data', 'small-mu.csv'))
 
 model_AssPlan = Ass_Plan_Prob(data,10)
-# model_AssPlan.optimize()
