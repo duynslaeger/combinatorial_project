@@ -15,6 +15,93 @@ def read_data(file):
             data.extend([float(value) for value in row])
     return data
 
+def AP_LD(data):
+    # Unpack
+    R = data['R']
+    Mu = data['Mu']
+    I = [i for i in range(len(R))]
+    
+    model = gp.Model('AP_LD')
+
+    # First add the variables that you use
+    # y = model.addVars(len(R),vtype=GRB.CONTINUOUS, name = "y", lb=0)
+    # z = model.addVars(len(R),vtype=GRB.BINARY, name = "z")
+
+    # Variables
+    pi = {}
+    
+    pi[0] = 0
+    for i in I[1:]:
+        pi[i] = model.addVar(vtype=GRB.CONTINUOUS, name = "pi[%s]" % i, lb=0)
+
+    pi_zero = model.addVar(vtype=GRB.CONTINUOUS)
+
+    Pi_constrain = {}
+    Pi_zero_constrain = {}
+
+    for i in I:
+        Pi_constrain[i] = model.addConstr(
+            pi_zero - gp.quicksum(pi[i]*exp(Mu[i]) for i in I[1:]) >= R[0]
+        )
+
+    for i in I:
+        Pi_zero_constrain[i] = model.addConstr(
+            pi_zero + pi[i] >= R[i]
+        )
+
+    model.setObjective(pi_zero, GRB.MINIMIZE)
+    # Update the model
+    model.update()
+
+
+    # Otpimize it
+    model.optimize()
+    print("Optimization on AP-LD is done. Objective function Value: %.2f " % model.ObjVal)
+
+    return model
+
+def AP_L(data):
+    # Unpack
+    R = data['R']
+    Mu = data['Mu']
+    I = [i for i in range(len(R))]
+    
+    model = gp.Model('AP_L')
+
+    # First add the variables that you use
+    # y = model.addVars(len(R),vtype=GRB.CONTINUOUS, name = "y", lb=0)
+    # z = model.addVars(len(R),vtype=GRB.BINARY, name = "z")
+
+    # Variables
+    y = {}
+    
+    for i in I:
+        y[i] = model.addVar(vtype=GRB.CONTINUOUS, name = "y[%s]" % i, lb=0)
+
+    Y_constrain = {}
+
+    for i in I:
+        Y_constrain[i] = model.addConstr(
+            y[i] <= y[0]*exp(Mu[i])
+        )
+
+    # Second add the constraint of your model
+    model.addConstr(y[0]+gp.quicksum(y[i] for i in I) == 1) # Need to remove i=0
+    # model.addConstrs(y[i] <= y[0]*exp(Mu[i]) for i in I)
+    # model.addConstrs(y[i] <= z[i] for i in I)
+    
+    # Then set the objective function
+    model.setObjective(R[0]*y[0] + gp.quicksum(R[i]*y[i] for i in I[1:]), GRB.MAXIMIZE)
+    # Update the model
+    model.update()
+
+
+    # Otpimize it
+    model.optimize()
+    print("Optimization on AP-L is done. Objective function Value: %.2f " % model.ObjVal)
+
+    return model
+
 def APC_MILP(data):
     # Unpack
     R = data['R']
@@ -68,10 +155,10 @@ def APC_MILP(data):
     #     Unknow_constrain[i] = model.addConstr(gp.quicksum(z[i]) <= p)
 
     # Second add the constraint of your model
-    model.addConstr(y[0]+gp.quicksum(y[i] for i in I) == 1) # Need to remove i=0
+    model.addConstr(y[0]+gp.quicksum(y[i] for i in I[1:]) == 1) # Need to remove i=0
     # model.addConstrs(y[i] <= y[0]*exp(Mu[i]) for i in I)
     # model.addConstrs(y[i] <= z[i] for i in I)
-    model.addConstr(gp.quicksum(z[i] for i in I) <= p ) #need to remove i=0
+    model.addConstr(gp.quicksum(z[i] for i in I[1:]) <= p ) #need to remove i=0
     
     # Then set the objective function
     model.setObjective(R[0]*y[0] + gp.quicksum(R[i]*y[i] for i in I[1:]), GRB.MAXIMIZE)
@@ -81,19 +168,19 @@ def APC_MILP(data):
 
     # Otpimize it
     model.optimize()
-    print("Optimization is done. Objective function Value: %.2f " % model.ObjVal)
+    print("Optimization on APC-MILP is done. Objective function Value: %.2f " % model.ObjVal)
 
     # Get the optimal values of y
-    optimal_y = [y[i].getAttr('X') for i in range(len(R))]
+    optimal_y = [y[i].getAttr('X') for i in I]
 
     # Get the optimal values of z
-    optimal_z = [int(z[i].getAttr('X')) for i in range(len(R))]
+    optimal_z = [int(z[i].getAttr('X')) for i in I]
 
     fig, axs = plt.subplots(2)
     fig.suptitle('Solution problem')
 
-    axs[0].scatter([i for i in range(len(R))],optimal_y)
-    axs[1].scatter([i for i in range(len(R))],optimal_z)
+    axs[0].scatter([i for i in I],optimal_y)
+    axs[1].scatter([i for i in I],optimal_z)
     plt.show()
 
     return model
@@ -104,5 +191,9 @@ def APC_MILP(data):
 data = {}
 data['R'] = read_data(os.path.join('data', 'small-r.csv'))
 data['Mu'] = read_data(os.path.join('data', 'small-mu.csv'))
-model_AssPlan = APC_MILP(data)
-print(model_AssPlan.getAttr('X'))
+model_AP_MILP = APC_MILP(data)
+print(model_AP_MILP.getAttr('X'))
+model_AP_L= AP_L(data)
+print(model_AP_L.getAttr('X'))
+model_AP_LD= AP_LD(data)
+print(model_AP_LD.getAttr('X'))
