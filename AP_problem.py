@@ -15,7 +15,7 @@ def read_data(file):
             data.extend([float(value) for value in row])
     return data
 
-def Ass_Plan_Prob(data):
+def APC_MILP(data):
     # Unpack
     R = data['R']
     Mu = data['Mu']
@@ -24,7 +24,7 @@ def Ass_Plan_Prob(data):
     # Change here the probability
     p = len(I)/5
     
-    model = gp.Model('TrnLocMILP')
+    model = gp.Model('APC_MILP')
 
     # First add the variables that you use
     # y = model.addVars(len(R),vtype=GRB.CONTINUOUS, name = "y", lb=0)
@@ -104,5 +104,5 @@ def Ass_Plan_Prob(data):
 data = {}
 data['R'] = read_data(os.path.join('data', 'small-r.csv'))
 data['Mu'] = read_data(os.path.join('data', 'small-mu.csv'))
-model_AssPlan = Ass_Plan_Prob(data)
+model_AssPlan = APC_MILP(data)
 print(model_AssPlan.getAttr('X'))

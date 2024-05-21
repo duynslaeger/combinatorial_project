@@ -1,0 +1,7 @@
+TO DO :
+
+- Terminer les points inachevés
+
+- Terminer la section 3
+
+- Coder AP-IP, AP-IPL, AP-L, AP-LD
