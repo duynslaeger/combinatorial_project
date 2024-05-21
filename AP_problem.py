@@ -21,7 +21,7 @@ def APC_MILP(data):
     Mu = data['Mu']
     I = [i for i in range(len(R))]
 
-    # Change here the probability
+    # Change here the probability --> Not a proba ! p is the number of objects. p \in {1, n/5, n/2, n}
     p = len(I)/5
     
     model = gp.Model('APC_MILP')
@@ -68,10 +68,10 @@ def APC_MILP(data):
     #     Unknow_constrain[i] = model.addConstr(gp.quicksum(z[i]) <= p)
 
     # Second add the constraint of your model
-    model.addConstr(y[0]+gp.quicksum(y[i] for i in I) == 1)
+    model.addConstr(y[0]+gp.quicksum(y[i] for i in I) == 1) # Need to remove i=0
     # model.addConstrs(y[i] <= y[0]*exp(Mu[i]) for i in I)
     # model.addConstrs(y[i] <= z[i] for i in I)
-    model.addConstr(gp.quicksum(z[i] for i in I) <= p )
+    model.addConstr(gp.quicksum(z[i] for i in I) <= p ) #need to remove i=0
     
     # Then set the objective function
     model.setObjective(R[0]*y[0] + gp.quicksum(R[i]*y[i] for i in I[1:]), GRB.MAXIMIZE)
@@ -98,7 +98,7 @@ def APC_MILP(data):
 
     return model
 
-# Retrieve the data form the CSV file, r => the net revenue of the object i where i belongs to I
+# Retrieve the data from the CSV file, r => the net revenue of the object i where i belongs to I
 #                                      mu => the mean utilities of the object i
 
 data = {}
