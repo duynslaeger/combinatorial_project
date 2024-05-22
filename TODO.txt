@@ -5,3 +5,5 @@ TO DO :
 - Terminer la section 3
 
 - Coder AP-IP, AP-IPL, AP-L, AP-LD
+
+- Trouver l'algo polynomial et le coder
