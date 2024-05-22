@@ -4,6 +4,8 @@ TO DO :
 
 - Terminer la section 3
 
-- Coder AP-IP, AP-IPL, AP-L, AP-LD
+- Coder APC-IP
 
-- Trouver l'algo polynomial et le coder
+- Coder l'algo polynomial 
+
+- Comparer les résultats
