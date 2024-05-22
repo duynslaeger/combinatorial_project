@@ -5,21 +5,23 @@ from math import exp
 from gurobipy import GRB
 import numpy as np
 import matplotlib.pyplot as plt
+from First_imp import First_improvement
+import pandas as pd
+import datetime
 
-def read_data(file):
-    data = []
-    with open(file, newline='') as csvfile:
-        column = csv.reader(csvfile, delimiter=';')
-        for row in column:
-            data.extend([float(value) for value in row])
+def read_data():
+    data = {}
+
+    data['R'] = pd.read_csv(os.path.join('data', 'small-r.csv'), delimiter=';',header=None)
+    data['Mu'] = pd.read_csv(os.path.join('data', 'small-mu.csv'), delimiter=';',header=None)
     return data
 
 
 class AP():
 
     def __init__(self, data):
-        self.R = data['R']
-        self.Mu = data['Mu']
+        self.R = data['R'][1].tolist()
+        self.Mu = data['Mu'][1].tolist()
     
     def AP_IPL(self):
 
@@ -220,28 +222,55 @@ class AP():
 
         return model
 
-# Retrieve the data from the CSV file, r => the net revenue of the object i where i belongs to I
-#                                      mu => the mean utilities of the object i
+    def test(self,objValue,result_algo):
+         
+        value_taken_MILP = self.APC_MILP()
+        value_taken_L= self.AP_L()
+        value_taken_LD= self.AP_LD()
+        value_taken_IP= self.AP_IP()
+        value_taken_IPL= self.AP_IPL()
+        # Retrieve the data from the CSV file, r => the net revenue of the object i where i belongs to I
+        #                                      mu => the mean utilities of the object i
 
-data = {}
-data['R'] = read_data(os.path.join('data', 'small-r.csv'))
-data['Mu'] = read_data(os.path.join('data', 'small-mu.csv'))
+        # Ecris tous dans un fichier texte
+        now = datetime.datetime.now()
 
+        # Format the filename
+        filename = 'test_file_{}.txt'.format(now.strftime("%Y%m%d%H%M%S"))
+
+        with open(filename, 'w') as f:
+            # Iterate over the variables
+            f.write('AP-LD result -> obj_value {} selected item {} \n'.format(value_taken_LD.ObjVal,value_taken_LD.getAttr('X')))
+            f.write('AP-IP result -> obj_value {} selected item {} \n'.format(value_taken_IP.ObjVal,value_taken_IP.getAttr('X')))
+            f.write('AP-L result -> obj_value {} selected item {} \n'.format(value_taken_L.ObjVal,value_taken_L.getAttr('X')))
+            f.write('AP-MILP result -> obj_value {} selected item {} \n'.format(value_taken_MILP.ObjVal,value_taken_MILP.getAttr('X')[:11]))
+            f.write('AP-MILP result -> obj_value {} selected item {} \n'.format(value_taken_IPL.ObjVal,value_taken_IPL.getAttr('X')[:11]))
+            f.write('Polynomial algo result -> obj_value {} selected item {} \n'.format(objValue,result_algo))
+
+data = read_data()
+
+# Extract a column's data into a list
+# Print the list
+polynomial_algo = First_improvement(data['R'][1],data['Mu'][1])
 Problem_Ap = AP(data=data)
+Problem_Ap.test(polynomial_algo[1],polynomial_algo[0])
+# print(First_improvement(data['R'][1],data['Mu'][1]))
 # model_AP_MILP = Problem_Ap.APC_MILP()
-# print(model_AP_MILP.getAttr('X'))
+# print(model_AP_MILP.getAttr('X')[:11])
 # model_AP_L= Problem_Ap.AP_L()
 # print(model_AP_L.getAttr('X'))
 # model_AP_LD= Problem_Ap.AP_LD()
+# print(model_AP_LD.getAttr('X'))
 # for v in model_AP_LD.getVars():
-#     if (v.VarName == "pi_zero"):
-#         print(f"{v.VarName} = {v.X}")
+#     print(f"{v.VarName} = {v.X}")
 # print(model_AP_LD.getAttr('X'))
 # model_AP_IP= Problem_Ap.AP_IP()
+# print(model_AP_IP.getAttr('X'))
 # print([j.X for j in model_AP_IP.getVars()])
 # for v in model_AP_IP.getVars():
 #     print(f"{v.VarName} = {v.X}")
-model_AP_IPL= Problem_Ap.AP_IPL()
-names_to_retrieve = (f"y[{i}]" for i in range(len(data['R'])))
-y_value = [model_AP_IPL.getVarByName(name).X for name in names_to_retrieve]
-print(y_value)
+# model_AP_IPL= Problem_Ap.AP_IPL()
+# print(model_AP_IPL.getAttr('X'))
+# names_to_retrieve = (f"y[{i}]" for i in range(len(data['R'])))
+# y_value = [model_AP_IPL.getVarByName(name).X for name in names_to_retrieve]
+# print(y_value)
