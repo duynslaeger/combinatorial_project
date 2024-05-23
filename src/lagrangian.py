@@ -64,10 +64,6 @@ def binary_search_lambda(Mu, R, p):
             minNotFound = False
             break
 
-        # print("lambda = ", currLambda)
-        # print("CurrVal = ", currVal)
-        # print("rightVal = ", rightVal)
-        # print("---------------------------------------")
         if(currVal < rightVal):
             # Search on the left
             right_bound = currLambda
@@ -80,12 +76,6 @@ def binary_search_lambda(Mu, R, p):
 
     return currLambda, currVal, bestLamba, bestVal
 
-# p = len(data['R'][0])
-# lambda_star = binary_search_lambda(data['Mu'][0], data['R'][0],p)
-# right_bound = max(0, (data['R'][0][1] - data['R'][0][0])/p)
-# print(right_bound)
-# print(lambda_star)
-
 
 m = 100
 x = [i for i in range(1,m+1)]
@@ -96,22 +86,22 @@ medium_dual_bounds = []
 
 # -------------- small --------------
 
-# data = read_data('small')
+data = read_data('small')
 
-# for i in range(m):
-#     p = len(data['R'][i])
-#     lambdaStar, minVal, bestLambda, bestVal = binary_search_lambda(data['Mu'][i], data['R'][i], p)
-#     small_primal_bounds.append(bestVal)
-#     small_dual_bounds.append(minVal)
+for i in range(m):
+    p = len(data['R'][i])
+    lambdaStar, minVal, bestLambda, bestVal = binary_search_lambda(data['Mu'][i], data['R'][i], p)
+    small_primal_bounds.append(bestVal)
+    small_dual_bounds.append(minVal)
 
-# plt.title("Bounds on small instances")
-# plt.plot(x, small_primal_bounds, label="Primal bounds")
-# plt.plot(x, small_dual_bounds, label="Dual Bounds")
-# plt.xlabel('Instances')
-# plt.ylabel("Objective value")
-# plt.legend()
-# plt.savefig('small_bounds.png')
-# plt.clf()
+plt.title("Bounds on small instances")
+plt.plot(x, small_primal_bounds, label="Primal bounds")
+plt.plot(x, small_dual_bounds, label="Dual Bounds")
+plt.xlabel('Instances')
+plt.ylabel("Objective value")
+plt.legend()
+plt.savefig('results/small_bounds.png')
+plt.clf()
 # plt.show()
 
 
@@ -131,6 +121,6 @@ plt.plot(x, medium_dual_bounds, label="Dual Bounds")
 plt.xlabel('Instances')
 plt.ylabel("Objective value")
 plt.legend()
-plt.savefig('medium_bounds.png')
+plt.savefig('results/medium_bounds.png')
 
 
