@@ -3,9 +3,7 @@ TO DO :
 - Terminer les points inachevés
 
 - Terminer la section 3
-
-- Coder APC-IP
-
-- Coder l'algo polynomial 
+    • 3.2 --> C'EST LE M
+    • 3.3.b --> c'est le sach
 
 - Comparer les résultats

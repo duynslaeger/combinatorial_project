@@ -60,6 +60,40 @@ class AP():
 
         return model
 
+    def APC_IP(self, p):
+
+        I = [i for i in range(len(self.R))]
+        
+        model = gp.Model('AP_IP')
+
+        # Variables
+        x= {}
+
+        # Introduce a new variable to allow division by non-constant
+        z= {}
+        
+        for i in I[1:]:
+            x[i] = model.addVar(vtype=GRB.BINARY, name = "x[%s]" % i)
+
+        z = model.addVar(vtype=GRB.CONTINUOUS)
+
+        model.addConstr(
+                (1+gp.quicksum(x[i]*exp(self.Mu[i]) for i in I[1:]))*z == 1
+            )
+        
+        model.addConstr(gp.quicksum(x[i] for i in I[1:]) <= p )
+
+        model.setObjective((self.R[0] + gp.quicksum(x[i]*self.R[i]*exp(self.Mu[i]) for i in I[1:]))*z, GRB.MAXIMIZE)
+        # Update the model
+        model.update()
+
+
+        # Otpimize it
+        model.optimize()
+        print("Optimization on AP-IP is done. Objective function Value: %.2f " % model.ObjVal)
+
+        return model
+    
     def AP_IP(self):
 
         I = [i for i in range(len(self.R))]
@@ -222,13 +256,14 @@ class AP():
 
         return model
 
-    def test(self,objValue,result_algo):
+    def test(self,objValue,result_algo, p):
          
         value_taken_MILP = self.APC_MILP()
         value_taken_L= self.AP_L()
         value_taken_LD= self.AP_LD()
         value_taken_IP= self.AP_IP()
         value_taken_IPL= self.AP_IPL()
+        value_taken_APC_IP=self.APC_IP(p)
         # Retrieve the data from the CSV file, r => the net revenue of the object i where i belongs to I
         #                                      mu => the mean utilities of the object i
 
@@ -243,6 +278,7 @@ class AP():
             f.write('AP-LD result -> obj_value {} selected item {} \n'.format(value_taken_LD.ObjVal,value_taken_LD.getAttr('X')))
             f.write('AP-IP result -> obj_value {} selected item {} \n'.format(value_taken_IP.ObjVal,value_taken_IP.getAttr('X')))
             f.write('AP-L result -> obj_value {} selected item {} \n'.format(value_taken_L.ObjVal,value_taken_L.getAttr('X')))
+            f.write('APC-IP result -> obj_value {} selected item {} \n'.format(value_taken_APC_IP.ObjVal,value_taken_APC_IP.getAttr('X')))
             f.write('AP-MILP result -> obj_value {} selected item {} \n'.format(value_taken_MILP.ObjVal,value_taken_MILP.getAttr('X')[:11]))
             f.write('AP-MILP result -> obj_value {} selected item {} \n'.format(value_taken_IPL.ObjVal,value_taken_IPL.getAttr('X')[:11]))
             f.write('Polynomial algo result -> obj_value {} selected item {} \n'.format(objValue,result_algo))
@@ -253,7 +289,7 @@ data = read_data()
 # Print the list
 polynomial_algo = First_improvement(data['R'][1],data['Mu'][1])
 Problem_Ap = AP(data=data)
-Problem_Ap.test(polynomial_algo[1],polynomial_algo[0])
+Problem_Ap.test(polynomial_algo[1],polynomial_algo[0], len(data['R'][0]))
 # print(First_improvement(data['R'][1],data['Mu'][1]))
 # model_AP_MILP = Problem_Ap.APC_MILP()
 # print(model_AP_MILP.getAttr('X')[:11])
