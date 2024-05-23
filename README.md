@@ -21,4 +21,3 @@ To build the 1.000.000 products instance, just run the large_instance_generator.
 ## Must not be ran : 
 - AP_problem.py
 - First_imp.py
-- 
