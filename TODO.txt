@@ -1,9 +1,9 @@
 TO DO :
 
-- Terminer les points inachevés
-
 - Terminer la section 3
-    • 3.2 --> C'EST LE M
-    • 3.3.b --> c'est le sach
+    • 3.2 large --> C'EST LE M
+    • 3.3.c/d --> c'est le sach
 
 - Comparer les résultats
+
+- Faire intro et abstract

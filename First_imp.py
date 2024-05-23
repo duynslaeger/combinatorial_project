@@ -3,6 +3,7 @@ import numpy
 
 
 def First_improvement(Mu, R):
+    # S is always non-empty because, there is always 0 in it to represent the non-taken object
     S=[]
     Denominator_S = 1
     delta = 1
